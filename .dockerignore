@@ -1,0 +1,57 @@
+# Everything the image must not contain.
+#
+# The first entry is the important one: .env holds the real CASE_CODE_PEPPER,
+# JWT_SECRET_KEY and database password. Baking it into an image would put those
+# secrets into every layer, every registry copy and every `docker history`
+# output. Secrets are supplied at run time, never built in.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# Version control and local tooling
+.git
+.gitignore
+.gitattributes
+.github
+
+# Virtual environments and caches
+.venv
+venv
+env
+ENV
+__pycache__
+*.py[cod]
+.pytest_cache
+.ruff_cache
+.mypy_cache
+htmlcov
+.coverage
+.coverage.*
+coverage.xml
+
+# Tests are not shipped. They import fixtures and test credentials that have no
+# place in a production image, and running them needs a database.
+tests/
+
+# Built model artifacts from the host. The image trains its own in a build
+# stage, so that what it serves provably matches the code beside it.
+ml/artifacts/
+
+# Documentation and editor files
+docs/
+*.md
+!ml/README.md
+.vscode
+.idea
+*.swp
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Local scratch
+*.log
+logs/
+scratch/

@@ -1,0 +1,12 @@
+# Normalise line endings so the repository is consistent across Windows,
+# macOS and Linux (and inside Docker images).
+* text=auto eol=lf
+
+# Binary assets must never be converted.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary
+*.joblib binary
+*.pkl binary

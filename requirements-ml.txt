@@ -1,0 +1,18 @@
+# Offline training pipeline dependencies.
+# Install with:  pip install -r requirements-ml.txt
+#
+# Phase 7 moved the three that runtime inference needs — scikit-learn, joblib
+# and numpy — into requirements.txt, where they are pinned to the same versions.
+# Installing this file on top of that adds only pandas.
+#
+# pandas stays training-only: it loads and validates datasets, and the API has
+# no use for it.
+
+-r requirements.txt
+
+pandas==2.3.3          # dataset loading and validation, training only
+
+# Deliberately NOT here, and not needed: TensorFlow, PyTorch, transformers,
+# LangChain, any LLM SDK, any vector database. The model is a linear classifier
+# over TF-IDF features; it trains in under a second on a laptop and stays
+# explainable. See ml/README.md.

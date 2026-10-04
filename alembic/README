@@ -1,0 +1,16 @@
+Alembic migration environment for WhistleDrop AI.
+
+The schema is reproducible from these migrations alone. Never alter the
+database by hand — write a migration.
+
+    alembic upgrade head                 # apply everything
+    alembic current                      # what the database is at
+    alembic history --verbose            # what exists
+    alembic downgrade -1                 # step back one
+    alembic revision --autogenerate -m "msg"
+    alembic check                        # fail if models and DB disagree
+
+The DSN comes from settings (DATABASE_URL). To target a different database:
+
+    ALEMBIC_DATABASE_URL=... alembic upgrade head
+    alembic -x db_url=... upgrade head

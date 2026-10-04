@@ -1,0 +1,43 @@
+# Runtime dependencies — pinned for reproducible installs.
+# Install with:  pip install -r requirements.txt
+
+fastapi==0.141.1
+uvicorn[standard]==0.53.0
+pydantic==2.13.5
+pydantic-settings==2.15.0
+
+# Database
+sqlalchemy==2.0.44
+psycopg[binary]==3.2.12   # PostgreSQL driver (psycopg 3, not psycopg2)
+alembic==1.17.2
+
+# Moderator authentication
+# bcrypt directly rather than passlib[bcrypt]: passlib 1.7.4 (unmaintained since
+# 2020) reads bcrypt.__about__.__version__, which modern bcrypt has removed, so
+# the pair raises on first use. bcrypt alone has no transitive dependencies.
+bcrypt==4.3.0
+pyjwt==2.10.1
+
+# Rate limiting
+# `limits` rather than `slowapi`, which was the package pencilled in for this
+# phase. slowapi applies its limit as a decorator that requires a `request:
+# Request` parameter on every handler it decorates, and ships its own error
+# response shape — both at odds with this project's thin routers and single
+# error envelope. `limits` is the library slowapi itself wraps, so the window
+# algorithm is the same code, with one less package and a clean dependency.
+limits==5.8.0
+
+# AI-assisted triage (runtime inference)
+# From Phase 7 the API loads the trained artifact and runs inference. joblib
+# reads it; scikit-learn and numpy are what the fitted objects inside it need.
+# All three are confined to app/ml/ — a test asserts nothing else imports them,
+# and the application starts and files reports normally if loading fails.
+#
+# pandas is deliberately NOT here: it is a training-time dependency only, and
+# lives in requirements-ml.txt.
+scikit-learn==1.7.2
+joblib==1.5.2
+numpy==2.3.4
+
+# Added in later phases:
+#   (none outstanding)

@@ -1,0 +1,52 @@
+# PostgreSQL for local development and integration testing.
+#
+# Two separate containers on two separate ports so that running the test suite
+# can never read or destroy development data. Values come from .env.
+#
+#   docker compose up -d          start both databases
+#   docker compose ps             check health
+#   docker compose down           stop (data is kept in the named volume)
+#   docker compose down -v        stop and DELETE all data
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: whistledrop-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-whistledrop}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-whistledrop}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - whistledrop_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-whistledrop} -d ${POSTGRES_DB:-whistledrop}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  db_test:
+    image: postgres:16-alpine
+    container_name: whistledrop-db-test
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-whistledrop}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
+      POSTGRES_DB: whistledrop_test
+    ports:
+      - "${POSTGRES_TEST_PORT:-5433}:5432"
+    # tmpfs: the test database is disposable, so it lives in memory. Faster,
+    # and it is wiped whenever the container restarts.
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-whistledrop} -d whistledrop_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  whistledrop_pgdata:
+    name: whistledrop_pgdata

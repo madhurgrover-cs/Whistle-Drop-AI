@@ -1,0 +1,132 @@
+# Production-shaped deployment: the API plus its database.
+#
+# Separate from docker-compose.yml on purpose. That file provisions the two
+# databases a developer runs tests against and nothing else; this one builds
+# and runs the application. Neither affects the other, so the development
+# workflow is unchanged:
+#
+#   development:  docker compose up -d                      (databases only)
+#   production:   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Every secret comes from the environment. Nothing is defaulted, and the `:?`
+# syntax means compose refuses to start rather than inventing a value — a
+# deployment that silently used a fallback JWT key would be worse than one
+# that would not start.
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: whistledrop-prod-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER must be set}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB must be set}
+    volumes:
+      - whistledrop_prod_pgdata:/var/lib/postgresql/data
+    # No ports published. The database is reachable only from the compose
+    # network, so nothing on the host — or anything that can reach the host —
+    # can connect to it directly.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - whistledrop
+
+  # Runs `alembic upgrade head` once and exits. The API waits for it to
+  # complete successfully.
+  #
+  # A separate service rather than a startup hook in the API: two replicas
+  # starting together would otherwise race to migrate the same database, and
+  # an application that migrates implicitly is an application that can migrate
+  # when nobody meant it to.
+  migrate:
+    build:
+      context: .
+      target: runtime
+    image: whistledrop-api:latest
+    container_name: whistledrop-migrate
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      # Required by Settings at import time even though migrations do not use
+      # them. Supplied from the environment like everything else.
+      CASE_CODE_PEPPER: ${CASE_CODE_PEPPER:?CASE_CODE_PEPPER must be set}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?JWT_SECRET_KEY must be set}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+    networks:
+      - whistledrop
+
+  api:
+    build:
+      context: .
+      target: runtime
+    image: whistledrop-api:latest
+    container_name: whistledrop-api
+    restart: unless-stopped
+    environment:
+      APP_ENV: production
+      # Never true in production: FastAPI's debug mode would serve interactive
+      # tracebacks. The application hard-wires `debug=False` regardless, but
+      # this keeps the intent explicit.
+      DEBUG: "false"
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+
+      CASE_CODE_PEPPER: ${CASE_CODE_PEPPER:?CASE_CODE_PEPPER must be set}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?JWT_SECRET_KEY must be set}
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: ${JWT_ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+
+      # Only set this where TLS is actually terminated in front of the service.
+      # Over plain HTTP browsers ignore HSTS, so sending it would imply a
+      # protection that does not exist.
+      HSTS_MAX_AGE_SECONDS: ${HSTS_MAX_AGE_SECONDS:-0}
+
+      # Empty by default: there is no browser front end, so nothing needs
+      # cross-origin access.
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-}
+
+      # Off unless a proxy in front of this OVERWRITES X-Forwarded-For.
+      TRUST_PROXY_HEADERS: ${TRUST_PROXY_HEADERS:-false}
+
+      # The model artifact is baked into the image by the trainer stage, at
+      # the path the application already defaults to relative to its WORKDIR.
+      # ML_ARTIFACT_ROOT is deliberately NOT set: an absolute path here is one
+      # more thing to get wrong, and on Windows a shell that rewrites POSIX
+      # paths will silently mangle it.
+      ML_TRIAGE_ENABLED: ${ML_TRIAGE_ENABLED:-true}
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      # Bound to loopback. Put a TLS-terminating reverse proxy in front of it;
+      # case codes and bearer tokens travel in bodies and headers, and over
+      # plain HTTP both are readable in transit.
+      - "127.0.0.1:8000:8000"
+    read_only: true
+    tmpfs:
+      # The application writes nothing to disk. A read-only root filesystem
+      # with one small tmpfs means a compromise cannot persist anything.
+      - /tmp:size=16m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    networks:
+      - whistledrop
+
+networks:
+  whistledrop:
+    driver: bridge
+
+volumes:
+  whistledrop_prod_pgdata:
+    name: whistledrop_prod_pgdata
