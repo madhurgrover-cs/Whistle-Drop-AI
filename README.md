@@ -1,6 +1,6 @@
 # WhistleDrop AI
 
-![CI](https://github.com/YushBytes/WhistleDrop-AI/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/madhurgrover-cs/Whistle-Drop-AI/actions/workflows/ci.yml/badge.svg)
 
 **Anonymous Reporting & Intelligent Case Triage System**
 
