@@ -111,7 +111,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         docs_url="/docs" if settings.enable_docs else None,
         redoc_url="/redoc" if settings.enable_docs else None,
         openapi_url="/openapi.json" if settings.enable_docs else None,
-        contact={"name": "WhistleDrop AI", "url": "https://github.com/YushBytes"},
+        contact={"name": "WhistleDrop AI", "url": "https://github.com/madhurgrover-cs"},
         license_info={"name": "MIT"},
         lifespan=_build_lifespan(settings),
     )
