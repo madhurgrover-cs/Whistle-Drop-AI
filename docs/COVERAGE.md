@@ -4,7 +4,7 @@
 python -m pytest --cov --cov-report=term-missing
 ```
 
-**94% line coverage, 751 tests**, measured across `app/`, `ml/src/` and
+**94% line coverage, 749 passing, 2 skipped**, measured across `app/`, `ml/src/` and
 `scripts/`. 40 of 59 measured files are at 100%.
 
 `scripts/demo.py` is omitted: it is an end-to-end smoke test that drives a

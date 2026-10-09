@@ -18,7 +18,7 @@
 ## Dataset
 
 - **File**: `synthetic_reports.csv`
-- **SHA-256**: `1d90652c987a8e7a7a7eb7c800bcb54c0abe9b592a7483a0f777d2be84347830`
+- **SHA-256**: `9c9dec6405a6839947d8ed5b81c6c6707b3c1f94b6c9bd64c843bca8893d1d3c`
 - **Synthetic**: yes — generated scaffolding
 - **Total records**: 950
 - **Valid records**: 950
@@ -175,4 +175,4 @@ Priority is **not** a trained model. No priority or severity labels exist in any
 
 ---
 
-*Model version `whistledrop-category-v1` · trained 2026-09-25T06:13:34+00:00 · scikit-learn 1.7.2 · seed 20260925*
+*Model version `whistledrop-category-v1` · trained 2026-10-09T17:25:30+00:00 · scikit-learn 1.7.2 · seed 20260925*

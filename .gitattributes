@@ -10,3 +10,8 @@
 *.pdf binary
 *.joblib binary
 *.pkl binary
+
+# The training dataset is fingerprinted by SHA-256 (see ml/src/data.py), so its
+# bytes must be identical on every checkout. Pinned explicitly so a change to
+# the global rule above can never silently alter the recorded dataset hash.
+ml/data/synthetic_reports.csv text eol=lf

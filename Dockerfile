@@ -95,7 +95,12 @@ EXPOSE 8000
 
 # Hits the one endpoint that touches neither the database nor the model, so it
 # answers "is this process serving?" and nothing else.
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+#
+# During the start period it probes every 2s (--start-interval, Docker Engine
+# 25+), so the container reports healthy within a couple of seconds of the API
+# being ready instead of waiting for the first 30s interval. The start period
+# covers the ML warm start; failures inside it do not count against retries.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --start-interval=2s --retries=3 \
     CMD python -c "import urllib.request,sys; \
 sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=4).status==200 else 1)"
 

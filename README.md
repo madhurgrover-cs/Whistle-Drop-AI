@@ -12,7 +12,7 @@ without ever learning who reported what.
 Built for **GDG on Campus SRM — Technical Recruitment 2026-27**
 (task: *WhistleDrop — Speak Without Being Seen*).
 
-> **Status: complete.** 751 tests passing, Ruff clean, migrations clean,
+> **Status: complete.** 749 tests passing, 2 skipped (need a local `.env`), Ruff clean, migrations clean,
 > end-to-end verified against a production Docker image.
 
 ---
@@ -61,7 +61,7 @@ code that is the only handle on the report.
 | **Visibility control** | Internal vs published notes, filtered in SQL |
 | **AI triage** | TF-IDF + logistic regression, advisory only, fully explainable |
 | **Hardening** | Rate limiting, body-size ceiling, security headers, strict CORS |
-| **Tests** | 751, against real PostgreSQL — never SQLite |
+| **Tests** | 749 passing, 2 skipped (need a local `.env`), against real PostgreSQL — never SQLite |
 
 ---
 
@@ -360,6 +360,10 @@ asserts the API documentation makes no such claim.
 - **Python 3.12** (3.13+ unsupported — see `pyproject.toml`)
 - **Docker Desktop** — for PostgreSQL
 
+> **Requires Python 3.12.** `pyproject.toml` pins `>=3.12,<3.13`, so 3.10, 3.11,
+> 3.13 and 3.14 will not work. On Windows, `py -0` lists the installed versions;
+> if 3.12 is missing, install it from python.org or with `uv python install 3.12`.
+
 ### 1. Install
 
 ```bash
@@ -477,7 +481,7 @@ uvicorn app.main:app --no-server-header --no-access-log
 ## Running tests
 
 ```bash
-pytest                          # 751 tests against real PostgreSQL
+pytest                          # 749 passing, 2 skipped (need a local .env)
 pytest --cov --cov-report=term-missing
 ruff check . && ruff format --check .
 alembic check                   # models and schema agree
@@ -637,7 +641,7 @@ WhistleDrop/
 ├── scripts/                 moderator seeding, end-to-end demo
 ├── alembic/                 migrations
 ├── docs/                    security checklist, deployment, coverage
-├── tests/                   751 tests
+├── tests/                   749 passing, 2 skipped
 ├── Dockerfile               three-stage production image
 ├── docker-compose.yml       development databases
 └── docker-compose.prod.yml  production stack
